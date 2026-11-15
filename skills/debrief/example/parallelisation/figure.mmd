@@ -1,0 +1,90 @@
+%%{init: {"flowchart": {"wrappingWidth": 190, "nodeSpacing": 30, "rankSpacing": 30, "htmlLabels": true}} }%%
+flowchart TB
+  A0["Asked — “do paralleilization first then”"]
+  class A0 neutral
+  subgraph G["What it set out to do"]
+    direction TB
+    G1["1. ✓ Probe OpenCode concurrent request tolerance"]
+    class G1 verified
+    G2["2. ✓ Add thread-safe progress reporting"]
+    class G2 verified
+    G1 ~~~ G2
+    G3["3. ✓ Parallelize section generation"]
+    class G3 verified
+    G2 ~~~ G3
+    G4["4. ✓ Parallelize evidence polish batches"]
+    class G4 verified
+    G3 ~~~ G4
+    G5["5. ✓ Verify with a real run and compare timings"]
+    class G5 verified
+    G4 ~~~ G5
+  end
+  subgraph P1["1 · Retire the unknown"]
+    direction LR
+    N1_1["✓ 7 concurrent requests succeed — 2.1s wall versus ~14s serial-equivalent"]
+    class N1_1 verified
+    W1["Why — the provider's concurrency limit was unknown and decides the whole design; 30 seconds of probing buys the right to commit"]
+    class W1 why
+    N1_1 ~~~ W1
+  end
+  subgraph P2["2 · Design the change"]
+    direction LR
+    N2_1["✓ Each section is one HTTP call with no shared state — safe to parallelize"]
+    class N2_1 verified
+    N2_2["✓ update_meta is a read-modify-write on session.json — a real race once workers call it"]
+    class N2_2 verified
+    N2_3["? Workers = 6 for sections, 4 for polish → 6, one below what the probe held"]
+    class N2_3 assumed
+    W2["Why — sections are independent I/O, but progress writes share one read-modify-write file, so the lock has to land before the pool does"]
+    class W2 why
+    N2_3 ~~~ W2
+  end
+  subgraph P3["3 · Prove it on real data"]
+    direction LR
+    N3_1["✓ Same transcript: 76.9s sequential versus 20.5s at 6 workers"]
+    class N3_1 verified
+    N3_2["✓ One section produced 2 points instead of 3 — five sequential runs gave 3,3,3,3,2, so it is sampling variance, not the…"]
+    class N3_2 verified
+    W3["Why (inferred) — a faster loop only counts if the output quality holds, so the benchmark measures points per section as well as wall clock"]
+    class W3 why
+    N3_2 ~~~ W3
+  end
+  subgraph P4["4 · Break it"]
+    direction LR
+    N4_1["✕ The parallelized pipeline works end to end"]
+    class N4_1 contradicted
+    N4_2["✓ The worker returns (index, generated); the merge was handed the whole tuple"]
+    class N4_2 verified
+    N4_3["✓ Rerun: 27.8s, 8 sections, 18 points, 100% coverage"]
+    class N4_3 verified
+    W4["Why — a green unit benchmark says nothing about the wiring, so the real entry point runs on a cloned session"]
+    class W4 why
+    N4_3 ~~~ W4
+  end
+  subgraph P5["5 · Close it"]
+    direction LR
+    N5_1["✓ Cold run 32.0s, warm run 0.1s — checkpoints are reused"]
+    class N5_1 verified
+    N5_2["? An unfamiliar session with a real document was left alone; only the agent's own probe dirs were deleted"]
+    class N5_2 assumed
+    N5_3["∅ A worker killed mid-burst leaves the other six checkpoints intact"]
+    class N5_3 unobserved
+    W5["Why (inferred) — checkpoints are what make a killed run cheap, so the warm path has to be shown to still reuse them"]
+    class W5 why
+    N5_3 ~~~ W5
+  end
+  P1 --> P2
+  P2 --> P3
+  P3 --> P4
+  P4 --> P5
+  A0 --> G
+  G --> P1
+  Z0["✓ Delivered — Threaded section + polish stages in transcript-reader, with a lock around the shared session file and a README note."]
+  class Z0 verified
+  P5 --> Z0
+  classDef verified fill:#e3ecf7,stroke:#2a78d6,stroke-width:1.5px,color:#0b0b0b
+  classDef assumed fill:#f6eedd,stroke:#c98500,stroke-width:1.5px,color:#0b0b0b
+  classDef contradicted fill:#f7e5e4,stroke:#d03b3b,stroke-width:1.5px,color:#0b0b0b
+  classDef unobserved fill:#fcfcfb,stroke:#898781,stroke-width:1.5px,stroke-dasharray:5 3,color:#52514e
+  classDef why fill:transparent,stroke:none,color:#52514e
+  classDef neutral fill:#fcfcfb,stroke:#52514e,stroke-width:1.5px,color:#0b0b0b

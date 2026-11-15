@@ -1,0 +1,42 @@
+flowchart TB
+  subgraph SESSION["Claude Code session"]
+    direction LR
+    CMD["/debrief"]:::entry --> SKILL["SKILL.md<br/>the 8-step procedure<br/>the agent follows"]:::doc
+  end
+
+  subgraph EXTRACT["extract.py · deterministic"]
+    direction LR
+    TRANSCRIPT[("session transcript<br/>~/.claude/projects/*/[id].jsonl")]:::data --> E1["slice the last exchange<br/>count rows, errors, retries,<br/>rebuild the plan history"]:::code --> DIGEST[("digest.md<br/>events.jsonl<br/>meta.json")]:::data
+  end
+
+  subgraph MODEL["model pass · judgement"]
+    direction LR
+    READ["reads the digest:<br/>phases · nodes · gates · frame"]:::agent --> DEBRIEF[("debrief.json<br/>ask · goals · phases<br/>nodes · gates · lessons")]:::data
+  end
+
+  subgraph RENDER["render.py · validates, then draws"]
+    direction LR
+    VAL["checks<br/>frame complete · quote found<br/>verbatim in the transcript ·<br/>claim wording · gate shape"]:::code --> FIG["figure.py<br/>hand-rolled<br/>SVG timeline"]:::code --> SVG[("figure.svg")]:::data
+    VAL --> MD[("report.md<br/>figure.mmd")]:::data
+  end
+
+  subgraph OPT["optional · --trace"]
+    direction TB
+    TRACE["trace.py"]:::code --> HTML[("trace.html")]:::data
+    TRACE -.->|"runs"| TT["trajectory-tree viewer<br/>installed outside the skill"]:::ext
+  end
+
+  REF["reference/colour-scheme.md<br/>palette · glyphs · what colour may encode"]:::doc
+
+  SESSION --> EXTRACT
+  EXTRACT --> MODEL
+  MODEL --> RENDER
+  RENDER -.->|"--trace"| OPT
+  REF -.->|"palette and glyph rules"| RENDER
+
+  classDef entry fill:#fcfcfb,stroke:#0b0b0b,stroke-width:1.5px,color:#0b0b0b
+  classDef doc fill:#fcfcfb,stroke:#52514e,stroke-width:1px,color:#0b0b0b
+  classDef code fill:#e3ecf7,stroke:#2a78d6,stroke-width:1.5px,color:#0b0b0b
+  classDef agent fill:#f6eedd,stroke:#c98500,stroke-width:1.5px,color:#0b0b0b
+  classDef data fill:#fcfcfb,stroke:#898781,stroke-width:1px,color:#52514e
+  classDef ext fill:#fcfcfb,stroke:#898781,stroke-width:1px,stroke-dasharray:5 3,color:#52514e

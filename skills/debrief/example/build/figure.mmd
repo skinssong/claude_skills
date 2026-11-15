@@ -1,0 +1,92 @@
+%%{init: {"flowchart": {"wrappingWidth": 190, "nodeSpacing": 30, "rankSpacing": 30, "htmlLabels": true}} }%%
+flowchart TB
+  A0["Asked — “yeah /debrief sounds more intuitive” … “i think the last exchange only makes more sense”"]
+  class A0 neutral
+  subgraph G["What it set out to do"]
+    direction TB
+    G1["1. ✓ Write the extractor: locate the session, slice the exchange, emit a digest"]
+    class G1 verified
+    G2["2. ✓ Write the renderer: validate quotes, emit the report"]
+    class G2 verified
+    G1 ~~~ G2
+    G3["3. ✓ Write SKILL.md and the colour reference"]
+    class G3 verified
+    G2 ~~~ G3
+    G4["4. ✓ Test end to end on a real exchange"]
+    class G4 verified
+    G3 ~~~ G4
+    G5["5. ✓ Fix whatever the test exposes"]
+    class G5 verified
+    G4 ~~~ G5
+  end
+  subgraph P1["1 · Scope it to one exchange"]
+    direction LR
+    N1_1["? Read the scope reply as a go-ahead to build, though it never said build → Build it now"]
+    class N1_1 assumed
+    N1_2["✓ Checked how the log marks a typed prompt versus an injected one — 315 versus 21"]
+    class N1_2 verified
+    W1["Why (inferred) — the user settled the name and the boundary — current session, last exchange — so the build had a fixed contract instead of an open design"]
+    class W1 why
+    N1_2 ~~~ W1
+  end
+  subgraph P2["2 · Make the digest trustworthy"]
+    direction LR
+    N2_1["✕ Saw the digest claim 8 errors; 7 of the 8 were source files that merely contain the word"]
+    class N2_1 contradicted
+    N2_2["✓ Re-ran with the tightened rule; the 8 became 1 — the real tuple failure"]
+    class N2_2 verified
+    N2_3["✕ Checked that the probe detector found the pre-design measurement; it found nothing — a case-sensitive match"]
+    class N2_3 contradicted
+    W2["Why (inferred) — the first real test of the extractor reported eight errors where the exchange had one, and a wrong count here would be copied into every judgement…"]
+    class W2 why
+    N2_3 ~~~ W2
+  end
+  subgraph P3["3 · Guard the quotes"]
+    direction LR
+    N3_1["✓ Planted a fake quote to test the guard; it refused to render and pointed at the node"]
+    class N3_1 verified
+    N3_2["✓ Checked which transcript the quote guard searches — chose the whole document over just the exchange being reviewed → The whole transcript"]
+    class N3_2 verified
+    N3_3["∅ Judged the figure readable from its dimensions alone — never opened it"]
+    class N3_3 unobserved
+    W3["Why (inferred) — the report is only worth reading if a sentence attributed to the agent was actually said, so the renderer refuses to run when a quote does not match"]
+    class W3 why
+    N3_3 ~~~ W3
+  end
+  subgraph P4["4 · Point it at the live session"]
+    direction LR
+    N4_1["✕ Guessed the folder-name rule wrong: underscores become hyphens too, so lookup failed"]
+    class N4_1 contradicted
+    N4_2["✕ Fixed the folder name; the next run died on a missing import in the same function"]
+    class N4_2 contradicted
+    N4_3["✓ Ran with no arguments; it found this session and the last prompt"]
+    class N4_3 verified
+    W4["Why (inferred) — the default invocation is the one that will actually be used, and it depends on finding the transcript without being told where it is"]
+    class W4 why
+    N4_3 ~~~ W4
+  end
+  subgraph P5["5 · Keep the command out of the window"]
+    direction LR
+    N5_1["✕ Tested the exclusion on a hand-made transcript; the first real /debrief still opened at the command turn"]
+    class N5_1 contradicted
+    N5_2["✕ Told the user a new skill needs a new session; it ran in this one"]
+    class N5_2 contradicted
+    W5["Why (inferred) — the /debrief command arrives as a user message, so a naive last-prompt rule would review the debrief request instead of the work"]
+    class W5 why
+    N5_2 ~~~ W5
+  end
+  P1 --> P2
+  P2 --> P3
+  P3 --> P4
+  P4 --> P5
+  A0 --> G
+  G --> P1
+  Z0["? Delivered — A /debrief skill: SKILL.md, two scripts, a colour reference, at ~/.claude/skills/debrief."]
+  class Z0 assumed
+  P5 --> Z0
+  classDef verified fill:#e3ecf7,stroke:#2a78d6,stroke-width:1.5px,color:#0b0b0b
+  classDef assumed fill:#f6eedd,stroke:#c98500,stroke-width:1.5px,color:#0b0b0b
+  classDef contradicted fill:#f7e5e4,stroke:#d03b3b,stroke-width:1.5px,color:#0b0b0b
+  classDef unobserved fill:#fcfcfb,stroke:#898781,stroke-width:1.5px,stroke-dasharray:5 3,color:#52514e
+  classDef why fill:transparent,stroke:none,color:#52514e
+  classDef neutral fill:#fcfcfb,stroke:#52514e,stroke-width:1.5px,color:#0b0b0b

@@ -1,0 +1,282 @@
+{
+  "title": "Building the debrief skill",
+  "ask": "“yeah /debrief sounds more intuitive” … “i think the last exchange only makes more sense”",
+  "goals": [
+    {
+      "goal": "Write the extractor: locate the session, slice the exchange, emit a digest",
+      "status": "verified",
+      "at": "16:50:13"
+    },
+    {
+      "goal": "Write the renderer: validate quotes, emit the report",
+      "status": "verified",
+      "at": "16:57:09"
+    },
+    {
+      "goal": "Write SKILL.md and the colour reference",
+      "status": "verified",
+      "at": "16:51:40"
+    },
+    {
+      "goal": "Test end to end on a real exchange",
+      "status": "verified",
+      "at": "17:08:09"
+    },
+    {
+      "goal": "Fix whatever the test exposes",
+      "status": "verified",
+      "at": "17:20:47"
+    }
+  ],
+  "delivered": "A /debrief skill: SKILL.md, two scripts, a colour reference, at ~/.claude/skills/debrief.",
+  "checked": "Extract and render ran end to end on two real exchanges, including the quote-rejection path. The skill's own /debrief invocation was never exercised — the first real one, next turn, failed.",
+  "outcome_status": "assumed",
+  "headline": "Forty-five minutes from a settled scope to a working skill, with five defects caught by running things rather than by reading them. Two claims went out untested: the figure was judged readable on its dimensions alone, and the rule that keeps the /debrief command out of the reviewed window was cleared only against a transcript the agent wrote itself — the first real invocation then reproduced the bug.",
+  "phases": [
+    {
+      "name": "Scope it to one exchange",
+      "why": "the user settled the name and the boundary — current session, last exchange — so the build had a fixed contract instead of an open design",
+      "why_source": "inferred",
+      "nodes": [
+        {
+          "claim": "Read the scope reply as a go-ahead to build, though it never said build",
+          "status": "assumed",
+          "evidence": "the message settled name and boundary; the decision to start building was the agent's own",
+          "quote": "They want me to build it now?",
+          "t": "16:40:51",
+          "gate": {
+            "question": "Build it now, or ask for confirmation first?",
+            "options": [
+              {
+                "text": "Build it now",
+                "verdict": "chosen",
+                "source": "inferred",
+                "why": "the original request was to build a skill, and this message settled the name and the scope — asking again would have stalled settled work"
+              },
+              {
+                "text": "Ask before starting",
+                "verdict": "rejected",
+                "source": "inferred",
+                "why": "the last explicit instruction had been 'don't do anything yet', so one confirmation would have been cheap"
+              }
+            ],
+            "quote": "So building is the follow-through"
+          }
+        },
+        {
+          "claim": "Checked how the log marks a typed prompt versus an injected one — 315 versus 21",
+          "status": "verified",
+          "evidence": "counted across transcripts at 16:41:40, so the boundary rule had evidence behind it",
+          "t": "16:41:40"
+        }
+      ]
+    },
+    {
+      "name": "Make the digest trustworthy",
+      "why": "the first real test of the extractor reported eight errors where the exchange had one, and a wrong count here would be copied into every judgement downstream",
+      "why_source": "inferred",
+      "nodes": [
+        {
+          "claim": "Saw the digest claim 8 errors; 7 of the 8 were source files that merely contain the word",
+          "status": "contradicted",
+          "evidence": "tightened to tracebacks, bare exception lines and explicit failures — one real error survived",
+          "quote": "The error detection has a false positive problem",
+          "t": "16:47:02",
+          "task": "Make the error signal mean something",
+          "trigger": "the first run on a real exchange listed eight 'errors', file reads among them"
+        },
+        {
+          "claim": "Re-ran with the tightened rule; the 8 became 1 — the real tuple failure",
+          "status": "verified",
+          "evidence": "digest 16:50:13: '1 errors'",
+          "quote": "errors down to 1",
+          "t": "16:50:13",
+          "task": "Make the error signal mean something"
+        },
+        {
+          "claim": "Checked that the probe detector found the pre-design measurement; it found nothing — a case-sensitive match",
+          "status": "contradicted",
+          "evidence": "the detector looks for a measurement taken before the first edit; it returned nothing until the label match was fixed",
+          "quote": "Probe signal is None",
+          "t": "16:48:28",
+          "task": "Make the probe detector fire",
+          "trigger": "a signal in the same meta dump read 'probe: None'"
+        },
+        {
+          "claim": "Matched the label case-insensitively; the probe was then detected",
+          "status": "verified",
+          "evidence": "meta.json 16:50:13: probe: Probe concurrency tolerance",
+          "quote": "probe: Probe concurrency tolerance at 4 and 7",
+          "t": "16:50:13",
+          "task": "Make the probe detector fire"
+        },
+        {
+          "claim": "Measured the digest at 4.7k tokens for a 37-call exchange",
+          "status": "verified",
+          "evidence": "18,742 bytes at 16:46:50 — small enough to read whole",
+          "t": "16:46:50"
+        }
+      ]
+    },
+    {
+      "name": "Guard the quotes",
+      "why": "the report is only worth reading if a sentence attributed to the agent was actually said, so the renderer refuses to run when a quote does not match",
+      "why_source": "inferred",
+      "nodes": [
+        {
+          "claim": "Planted a fake quote to test the guard; it refused to render and pointed at the node",
+          "status": "verified",
+          "evidence": "exit code 1, with the offending claim named",
+          "quote": "quote validation failed",
+          "t": "16:57:09"
+        },
+        {
+          "claim": "Checked which transcript the quote guard searches — chose the whole document over just the exchange being reviewed",
+          "status": "verified",
+          "evidence": "confirmed the earlier quote exists at 07:50:51, before the action it explains",
+          "quote": "The validation searches the whole transcript, which is right",
+          "t": "16:54:23",
+          "gate": {
+            "question": "Where should quote validation look?",
+            "options": [
+              {
+                "text": "The whole transcript",
+                "verdict": "chosen",
+                "source": "quoted",
+                "why": "a rationale said in the previous turn is still what the action was based on"
+              },
+              {
+                "text": "Only this exchange's window",
+                "verdict": "rejected",
+                "source": "inferred",
+                "why": "it would reject legitimate quotes from the turn that set the work up"
+              }
+            ],
+            "quote": "The validation searches the whole transcript, which is right"
+          }
+        },
+        {
+          "claim": "Judged the figure readable from its dimensions alone — never opened it",
+          "status": "unobserved",
+          "evidence": "four renders, each checked only by size. Opened afterwards: legible, but 532×1943 and five bands tall.",
+          "quote": "532 x 1943",
+          "t": "17:14:26",
+          "outcome": "still unverified"
+        },
+        {
+          "claim": "Cut the diagram to three nodes per phase; the report table still lists all 13",
+          "status": "verified",
+          "evidence": "the cap only demotes detail out of the figure",
+          "t": "17:21:54"
+        }
+      ]
+    },
+    {
+      "name": "Point it at the live session",
+      "why": "the default invocation is the one that will actually be used, and it depends on finding the transcript without being told where it is",
+      "why_source": "inferred",
+      "nodes": [
+        {
+          "claim": "Guessed the folder-name rule wrong: underscores become hyphens too, so lookup failed",
+          "status": "contradicted",
+          "evidence": "the real directory name had to be read before the rule was right",
+          "quote": "no transcript directory",
+          "t": "17:06:12",
+          "task": "Make the default run find the transcript",
+          "trigger": "the first default run failed to find the transcript"
+        },
+        {
+          "claim": "Fixed the folder name; the next run died on a missing import in the same function",
+          "status": "contradicted",
+          "evidence": "second failure on the same code, fixed at 17:07:33",
+          "quote": "NameError: name 're' is not defined",
+          "t": "17:07:28",
+          "task": "Make the default run find the transcript",
+          "trigger": "the corrected run still failed — this time on an import"
+        },
+        {
+          "claim": "Ran with no arguments; it found this session and the last prompt",
+          "status": "verified",
+          "evidence": "resolved the session and 141 events without being told anything",
+          "t": "17:08:09",
+          "task": "Make the default run find the transcript",
+          "trigger": "the second fix needed the same test again"
+        },
+        {
+          "claim": "Chose the session id from the environment over the newest file on disk",
+          "status": "verified",
+          "evidence": "the run afterwards resolved the right session without arguments",
+          "quote": "the default should prefer $CLAUDE_CODE_SESSION_ID if it exists",
+          "t": "17:09:17",
+          "gate": {
+            "question": "How should the current session be identified?",
+            "options": [
+              {
+                "text": "Ask the environment for the session id",
+                "verdict": "chosen",
+                "source": "quoted",
+                "why": "the id is authoritative; mtime is only a guess"
+              },
+              {
+                "text": "Take the newest file in the project folder",
+                "verdict": "rejected",
+                "source": "inferred",
+                "why": "it picked a different session than the one running, which is how the mismatch was noticed"
+              }
+            ],
+            "quote": "the default should prefer $CLAUDE_CODE_SESSION_ID if it exists",
+            "depends_on": "Guessed the folder-name rule wrong"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Keep the command out of the window",
+      "why": "the /debrief command arrives as a user message, so a naive last-prompt rule would review the debrief request instead of the work",
+      "why_source": "inferred",
+      "nodes": [
+        {
+          "claim": "Tested the exclusion on a hand-made transcript; the first real /debrief still opened at the command turn",
+          "status": "contradicted",
+          "evidence": "the fake turn was written from the agent's assumption about the format and started with the wrong marker; fixed and re-run since — 233 events",
+          "quote": "The invocation is excluded correctly",
+          "t": "17:20:47",
+          "outcome": "fixed and re-run",
+          "trigger": "the /debrief command arrives as a user message, so the rule had to be checked"
+        },
+        {
+          "claim": "Told the user a new skill needs a new session; it ran in this one",
+          "status": "contradicted",
+          "evidence": "the command was invoked immediately after the build, in the same session",
+          "quote": "a newly created skill is picked up at session start",
+          "t": "17:24:15",
+          "outcome": "disproven the next turn",
+          "trigger": "the agent had no way to test whether skills reload"
+        }
+      ]
+    }
+  ],
+  "lessons": [
+    {
+      "text": "A synthetic fixture built from your own model of a format verifies the model, not the format. The fake command turn started with the wrong marker because that was the assumption; the first real invocation reproduced the bug immediately.",
+      "node": "Tested the exclusion on a hand-made transcript"
+    },
+    {
+      "text": "Measuring a figure is not looking at one. Four renders were accepted on dimensions alone; a later rasterisation shows it legible but very tall — the conclusion happened to be right, and it was still a guess.",
+      "node": "Judged the figure readable from its dimensions alone"
+    },
+    {
+      "text": "Text-grepping output for 'error' found zero true positives in eight hits. Prefer structured signals — exit codes, traceback headers — and treat substring matching as the fallback.",
+      "node": "Assumed any output containing 'error' meant a failed command"
+    },
+    {
+      "text": "Two failures in a row on the same function deserves a second look before the third run: the encoding fix was right and the next failure was a missing import in the same edit.",
+      "node": "Fixed the folder name"
+    }
+  ],
+  "open": [
+    "The command-turn exclusion is fixed but has no test guarding it; the case that broke it is still covered only by real invocations.",
+    "No run against an exchange with zero tool calls, where the report would have one phase and one node.",
+    "The figure is legible but very tall — 532×1943; a wide layout has not been tried since the node cap."
+  ]
+}
