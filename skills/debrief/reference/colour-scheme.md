@@ -25,11 +25,11 @@ Three axes survive the "always true, whatever the work" test:
 | Success vs failure | Misses the point: a *failed probe* is a success, an *unverified pass* is a liability | never as an axis |
 | Importance / leverage | Yes, but a separate channel | annotation, not colour |
 
-The axis also turns the packet's own worst finding into something you can see. In the
-parallelization exchange, `SECTION_WORKERS=6` was **assumed** four minutes before the
-measurement that later **verified** it was safe. Those two states are now two different
-colours, and their order on the page shows the guess preceded the evidence. No extra
-encoding needed — the §3a failure mode is visible for free.
+The axis also turns the packet's own worst finding into something you can see. In one
+exchange, a worker count was **assumed** four minutes before the measurement that later
+**verified** it was safe. Those two states are now two different colours, and their order
+on the page shows the guess preceded the evidence. No extra encoding needed — the §3a
+failure mode is visible for free.
 
 ---
 

@@ -21,17 +21,11 @@ where an option was set aside; and a `figure.mmd` if you want to edit the diagra
 The rule that keeps it honest: every quote in the report is checked against the
 transcript, and the render fails if one is not there verbatim.
 
-Two worked examples ship with the skill, each with the `debrief.json` it was rendered from:
-
-- **Building this skill** — [report.md](skills/debrief/example/build/report.md) ·
-  [debrief.json](skills/debrief/example/build/debrief.json). This is the timeline in the
-  screenshot above: three forks, among them whether to build immediately and how to
-  identify the current session.
-- **A parallelisation change** — [report.md](skills/debrief/example/parallelisation/report.md) ·
-  [debrief.json](skills/debrief/example/parallelisation/debrief.json). Shorter, and it shows
-  the time axis doing its job: the probe, the design, the benchmark, the break.
-
-![The parallelisation exchange: an early probe, a worker-count fork, then a failure at phase 4 that the next run resolves](skills/debrief/docs/parallelisation-timeline.png)
+A worked example ships with the skill, together with the `debrief.json` it was rendered
+from: **building this skill** — [report.md](skills/debrief/example/build/report.md) ·
+[debrief.json](skills/debrief/example/build/debrief.json). It is the timeline in the
+screenshot above: three forks, among them whether to build immediately and how to identify
+the current session.
 
 - Design notes: [architecture](skills/debrief/docs/debrief-architecture.svg) ·
   [colour scheme](skills/debrief/reference/colour-scheme.md)
@@ -78,7 +72,7 @@ above.
 
 ```
 skills/
-  debrief/      SKILL.md · scripts/ · reference/ · example/{build,parallelisation}/ · docs/
+  debrief/      SKILL.md · scripts/ · reference/ · example/build/ · docs/
   mermaid/      SKILL.md · docs/
 install.sh
 ```
@@ -88,7 +82,7 @@ install.sh
 - `debrief` reads `~/.claude/projects/*/<session>.jsonl`. That format is undocumented and
   changes with Claude Code releases; this is the part of the repo most likely to need
   maintenance.
-- Each example under `skills/debrief/example/` ships its `debrief.json` so the rendering
-  inputs are visible; the transcript itself is not committed, and neither is the generated
-  3 MB `trace.html`.
+- The example under `skills/debrief/example/build/` ships its `debrief.json` so the
+  rendering inputs are visible; the transcript itself is not committed, and neither is the
+  generated 3 MB `trace.html`.
 - MIT licensed — see [LICENSE](LICENSE).

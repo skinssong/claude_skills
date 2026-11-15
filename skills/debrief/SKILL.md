@@ -119,7 +119,7 @@ A node is an **event in the work**, written for someone who has not read the cod
 test: *could a reader retell this exchange from the figure alone?* If they need to have
 seen the source to parse the claim, rewrite it.
 
-- **Bad:** "The probe-before-edit signal fires on the parallelization exchange" — names an
+- **Bad:** "The probe-before-edit signal fires on an earlier exchange" — names an
   internal detector; unreadable to anyone who hasn't read `extract.py`.
 - **Good:** "Tried the detector on an old exchange; it found nothing — the match was
   case-sensitive" — says what was attempted, what came back, and why it was wrong.
